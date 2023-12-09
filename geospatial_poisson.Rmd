@@ -1,0 +1,100 @@
+---
+title: "Geospatial Poisson in R"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(sf)
+```
+
+Part 1 - Data Preparation
+
+You've been provided three datasets for this project:
+
+burglaries_2023.csv: Contains data on the aggravated burglary incidents in Davidson County. This was obtained from https://data.nashville.gov/Police/Metro-Nashville-Police-Department-Incidents/2u6v-ujjs.
+
+census.csv: Census tract level data on population and median income. This was obtained from the US Census American Community Survey.
+
+DC: A shapefile containing Davidson County census tracts
+
+Perform a spatial join to determine the census tract in which each burglary occurred. Hint: You may want to make use of the st_as_sf function in order to convert the burglaries data into an sf object.
+
+After performing the spatial join, merge in the census data. Note: Make sure that the final dataset contains all census tracts.
+
+
+```{r}
+burglaries <- read_csv("../geospatial-poisson-ndidiox/data/burglaries_2023.csv")
+```
+
+```{r}
+dc_shape <- st_read("../geospatial-poisson-ndidiox/data/DC/DC.shx")
+```
+
+```{r}
+dc_shape |>
+  ggplot() +
+  geom_sf()
+```
+
+
+```{r}
+burglaries_geo <- st_as_sf(burglaries |> drop_na('latitude'),
+                           coords = c('longitude', 'latitude'),
+                           crs = st_crs(dc_shape)
+                           )
+```
+
+
+```{r}
+dc_shape |>
+  ggplot() +
+  geom_sf() +
+  geom_sf(data = burglaries_geo, size = 0.1)
+```
+
+```{r}
+burglaries_dc <- st_join(burglaries_geo, dc_shape, join = st_within)
+```
+
+
+```{r}
+census <- read_csv("C:/Users/ndidi/Documents/NSS_Projects/geospatial-poisson-ndidiox/data/census.csv")
+```
+
+```{r}
+final_df <- left_join(burglaries_dc, census, by = join_by(TRACTCE == tract))
+```
+
+
+```{r}
+final_df |> head()
+```
+
+
+Part 2 - Exploratory Analysis
+Perform some exploraty analysis on your prepared dataset.
+
+Aggregate the data by census tract. Warning: each incident can appear multiple times if there are multiple victims, so be sure that you aren't double-counting any incidents.
+
+Which census tract had the highest number of burglaries? Which census tract had the highest number of burglaries per 1000 residents?
+
+We're interested in the relationship between median income and number of aggravated burglaries, so examine those variables on their own and together to see what you can find. You may want to perform additional calculations, create plots, etc.
+```{r}
+
+```
+
+
+```{r}
+```
+
+
+```{r}
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
