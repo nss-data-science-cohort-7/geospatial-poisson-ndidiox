@@ -8,15 +8,7 @@ library(tidyverse)
 library(sf)
 ```
 
-Part 1 - Data Preparation
-
-You've been provided three datasets for this project:
-
-burglaries_2023.csv: Contains data on the aggravated burglary incidents in Davidson County. This was obtained from https://data.nashville.gov/Police/Metro-Nashville-Police-Department-Incidents/2u6v-ujjs.
-
-census.csv: Census tract level data on population and median income. This was obtained from the US Census American Community Survey.
-
-DC: A shapefile containing Davidson County census tracts
+### Part 1 - Data Preparation
 
 Perform a spatial join to determine the census tract in which each burglary occurred. Hint: You may want to make use of the st_as_sf function in order to convert the burglaries data into an sf object.
 
@@ -71,30 +63,45 @@ final_df <- left_join(burglaries_dc, census, by = join_by(TRACTCE == tract))
 final_df |> head()
 ```
 
-
-Part 2 - Exploratory Analysis
+### Part 2 - Exploratory Analysis
 Perform some exploraty analysis on your prepared dataset.
 
 Aggregate the data by census tract. Warning: each incident can appear multiple times if there are multiple victims, so be sure that you aren't double-counting any incidents.
 
-Which census tract had the highest number of burglaries? Which census tract had the highest number of burglaries per 1000 residents?
+```{r}
+final_df |>
+  st_drop_geometry() |>
+  group_by(TRACTCE) |>
+  summarise(num_burglaries = n_distinct(incident_number)) |>
+  arrange(desc(num_burglaries))
+```
+
+Which census tract had the highest number of burglaries?
+Tract 016000 had the highest number of burglaries
+
+
+Which census tract had the highest number of burglaries per 1000 residents?
+
+```{r}
+final_df |>
+  st_drop_geometry() |>
+  group_by(TRACTCE) |>
+  summarise(burg_per_1000 = (n_distinct(incident_number) / unique(population)) * 1000) |>
+  arrange(desc(burg_per_1000))
+```
+Tract 016000 had the highest number of burglaries per 1000 residents.
+
 
 We're interested in the relationship between median income and number of aggravated burglaries, so examine those variables on their own and together to see what you can find. You may want to perform additional calculations, create plots, etc.
-```{r}
-
-```
-
-
-```{r}
-```
-
 
 ```{r}
 
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+### Part 3 - Statistical Modeling
+
+Fit a Poisson regression model with target variable the rate of burglaries per census tract and with predictor the median income. Offset using the log of the population so that we are looking at the rate of burglaries per population instead of the number of burglaries. How can you interpret the meaning of the output? How do the estimates from the model compare to the observed data?
+
+
